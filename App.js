@@ -13,7 +13,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
+  Button,
   useColorScheme,
   View,
 } from 'react-native';
@@ -25,10 +25,42 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-
+import notifee from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
 const App: () => Node = () => {
   const isDarkMode = useColorScheme() === 'dark';
+  async function onDisplayNotification() {
+    // Create a channel
+    const channelId = await notifee.createChannel({
+      id: 'default',
+      name: 'Default Channel',
+    });
 
+    // Display a notification
+    await notifee.displayNotification({
+      title: 'Notification Title',
+      body: 'Main body content of the notification',
+      android: {
+        channelId,
+      },
+    });
+  }
+
+  const onDisplayRemoteNotification = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
+    }
+    await messaging()
+      .getToken()
+      .then(fcmToken => {
+        console.log('FCM token:', fcmToken);
+      });
+  };
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
     flex: 1,
@@ -39,7 +71,14 @@ const App: () => Node = () => {
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <Text>Notificaiton</Text>
+      <Button
+        title="Display Notification"
+        onPress={() => onDisplayNotification()}
+      />
+      <Button
+        title="Display remote Notification"
+        onPress={() => onDisplayRemoteNotification()}
+      />
     </SafeAreaView>
   );
 };
